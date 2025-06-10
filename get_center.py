@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # 비디오 캡처 (영상 파일 경로로 변경, 예: 'test1.mp4')
-cap = cv2.VideoCapture('test3.mp4')  # 영상 파일 경로를 실제 파일로 변경
+cap = cv2.VideoCapture('resource/test3.mp4')  # 영상 파일 경로를 실제 파일로 변경
 if not cap.isOpened():
     print("영상을 열 수 없습니다.")
     exit()
@@ -82,7 +82,7 @@ while True:
     prev_gray = gray.copy()
 
     # 천천히 보기 (60ms 대기, 약 16fps)
-    if cv2.waitKey(0) & 0xFF == 27:
+    if cv2.waitKey(50) & 0xFF == 27:
         break
 
 # 영상 끝난 후 최대 강도 지점 표시
