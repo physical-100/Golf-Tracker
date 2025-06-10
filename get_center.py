@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-# 비디오 캡처 (영상 파일 경로로 변경, 예: 'test1.mp4')
-cap = cv2.VideoCapture('resource/test3.mp4')  # 영상 파일 경로를 실제 파일로 변경
+# 비디오 캡처 (영상 파일 경로로 변경, 예: 'test3.mp4')
+cap = cv2.VideoCapture('resource/test1.mp4')  # 영상 파일 경로를 실제 파일로 변경
 if not cap.isOpened():
     print("영상을 열 수 없습니다.")
     exit()
@@ -26,6 +26,10 @@ collision_point = None
 max_magnitude_global = 0.0  # 영상 전체에서 최대 강도
 max_point_global = (0, 0)  # 영상 전체에서 최대 강도 지점
 
+# 처음 강도가 25를 넘은 지점 추적 변수
+first_high_magnitude_detected = False
+first_high_magnitude_point = None
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -43,9 +47,19 @@ while True:
     flow_magnitude = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX)
     flow_magnitude = flow_magnitude.astype(np.uint8)
 
+    # 처음 강도가 25를 넘은 지점 감지
+    if not first_high_magnitude_detected and np.max(magnitude) > 20:
+        first_high_magnitude_detected = True
+        max_idx = np.unravel_index(np.argmax(magnitude), magnitude.shape)
+        first_high_magnitude_point = (max_idx[1], max_idx[0])  # (x, y) 좌표
+        print(f"First magnitude > 20 detected at: {first_high_magnitude_point}")
+        cv2.circle(roi, first_high_magnitude_point, 10, (0, 255, 255), -1)  # 노란색 원
+
     # 충돌 감지
     mean_magnitude = np.mean(magnitude)
-    print(f"Mean Magnitude: {mean_magnitude}")
+    max_magnitude = np.max(magnitude)
+    # print(f"Mean Magnitude: {mean_magnitude}")
+    print(f"Max Magnitude: {max_magnitude}")
 
     if mean_magnitude < threshold and not collision_detected:
         collision_detected = True
@@ -89,7 +103,23 @@ while True:
 if max_magnitude_global > 0:
     final_frame = prev_frame.copy()  # 마지막 프레임 사용
     final_roi = final_frame[0:half_height, 0:width]
-    cv2.circle(final_roi, max_point_global, 10, (0, 255, 0), -1)  # 초록색 원
+    print(f"Global Max Magnitude: {max_magnitude_global} at {max_point_global}")
+    
+    # 노란색 원 (처음 강도가 25를 넘은 지점)
+    cv2.circle(final_roi, first_high_magnitude_point, 10, (0, 255, 255), -1)
+    
+    # 초록색 원 (최대 강도 지점)
+    cv2.circle(final_roi, max_point_global, 10, (0, 255, 0), -1)
+    
+    # 두 원의 중간 지점 계산
+    midpoint = ((first_high_magnitude_point[0] + max_point_global[0]) // 2,
+                (first_high_magnitude_point[1] + max_point_global[1]) // 2)
+    
+    # 중간 지점에 원 그리기 (파란색 원)
+    cv2.circle(final_roi, midpoint, 10, (255, 0, 0), -1)
+    print(f"Midpoint between the two points: {midpoint}")
+    
+    # 결과 표시
     cv2.putText(final_roi, f'Max: {max_magnitude_global:.1f}', (max_point_global[0] + 15, max_point_global[1]), 
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     cv2.imshow('Max Magnitude Point', final_roi)
