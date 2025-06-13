@@ -43,7 +43,7 @@ while True:
     flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
     magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
 
-    # 움직임 크기 정규화 (히트맵용)
+    # 움직임 크기 정규화 (히트맵용)s
     flow_magnitude = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX)
     flow_magnitude = flow_magnitude.astype(np.uint8)
 
